@@ -1,0 +1,4 @@
+lib/*
+testrun/*
+bin/*
+build

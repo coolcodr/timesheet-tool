@@ -1,0 +1,107 @@
+<?xml version="1.0"?>
+
+<project name="Build timesheet-tool" basedir="." default="testrun" xmlns:artifact="antlib:org.apache.maven.artifact.ant">
+
+	<property name="lib.dir" location="lib" />
+	<property name="lib.ant.dir" location="lib-ant" />
+	<property name="build.dir" location="build" />
+	<property name="src.dir" value="src" />
+	<property name="dist.dir" location="build/dist" />
+	<property name="dist.lib.dir" location="build/dist" />
+	<property name="classes.dir" location="build/classes" />
+	<property name="resources.dir" value="resources" />
+	<property name="jar.name" value="timesheet-tool" />
+	<property name="version.id" value="1.0" />
+	<property name="jdk.version.source" value="1.5" description="JDK version of source code" />
+	<property name="testrun-bin.dir" location="testrun/bin" />
+	<property name="resources.dir" value="resources" />
+
+	<path id="maven-ant-tasks.classpath" path="${lib.ant.dir}/maven-ant-tasks-2.1.0.jar" />
+	<typedef resource="org/apache/maven/artifact/ant/antlib.xml" uri="antlib:org.apache.maven.artifact.ant" classpathref="maven-ant-tasks.classpath" />	
+	
+	<target name="clean">
+		<delete dir="${dist.dir}" failonerror="false" />
+		<delete dir="${classes.dir}" failonerror="false" />
+		<delete dir="${testrun-bin.dir}" failonerror="false" />
+	</target>
+
+	<target name="init" depends="-check-library">
+		<tstamp />
+		<mkdir dir="${build.dir}" />
+		<mkdir dir="${classes.dir}" />
+		<mkdir dir="${dist.dir}" />
+		<mkdir dir="${dist.lib.dir}" />
+		<mkdir dir="${testrun-bin.dir}" />
+		<copy todir="${lib.dir}">
+			<path refid="dependency.classpath" />
+		</copy>		
+	</target>
+
+	<path id="lib-list">
+		<fileset dir="${lib.dir}">
+			<include name="*.jar" />
+			<include name="*.zip" />
+		</fileset>
+	</path>
+
+	<path id="dist-lib-list">
+		<fileset dir="${dist.lib.dir}">
+			<include name="*.jar" />
+			<include name="*.zip" />
+			<exclude name="${jar.name}*.jar" />
+		</fileset>
+	</path>
+	
+	<target name="-check-library">
+		<artifact:dependencies pathId="dependency.classpath">
+			<dependency groupId="log4j" artifactId="log4j" version="1.2.16" />
+			<dependency groupId="net.java.dev.designgridlayout" artifactId="designgridlayout" version="1.1" />
+			<dependency groupId="dom4j" artifactId="dom4j" version="1.6.1" />
+			<dependency groupId="jaxen" artifactId="jaxen" version="1.1.1" />
+		</artifact:dependencies>
+	</target>	
+
+	<target name="compile" depends="init">
+		<javac source="${jdk.version.source}" srcdir="${src.dir}" destdir="${classes.dir}" debug="on" debuglevel="lines,vars,source">
+			<classpath refid="lib-list" />
+		</javac>
+		<copy todir="${classes.dir}">
+			<fileset dir="${src.dir}">
+				<include name="**/*.*" />
+				<exclude name="**/*.java" />
+			</fileset>
+		</copy>
+	</target>
+
+	<target name="jar" depends="compile">
+		<copy todir="${dist.lib.dir}">
+			<fileset dir="${lib.dir}" />
+		</copy>
+		<manifestclasspath property="manifest-lib-list" jarfile="${dist.dir}/${jar.name}.jar">
+			<classpath refid="dist-lib-list" />
+		</manifestclasspath>
+		<jar destfile="${dist.dir}/${jar.name}.jar">
+			<fileset dir="${classes.dir}" />
+			<manifest>
+				<attribute name="Built-By" value="${user.name}" />
+				<attribute name="Specification-Title" value="${jar.name}" />
+				<attribute name="Specification-Version" value="${version.id}-${DSTAMP}_${TSTAMP}" />
+				<attribute name="Specification-Vendor" value="CoolCodr" />
+				<attribute name="Implementation-Title" value="${jar.name}" />
+				<attribute name="Implementation-Version" value="${version.id}-${DSTAMP}_${TSTAMP}" />
+				<attribute name="Implementation-Vendor" value="CoolCodr" />
+				<attribute name="Main-Class" value="com.coolcodr.timesheet.Main" />
+				<attribute name="Class-Path" value="${manifest-lib-list}" />
+			</manifest>
+		</jar>
+	</target>
+
+	<target name="testrun" depends="jar">
+		<copy todir="${testrun-bin.dir}">
+			<fileset dir="${dist.dir}" />
+		</copy>
+		<copy file="${resources.dir}/log4j.properties" tofile="${testrun-bin.dir}/log4j.properties" overwrite="true" />
+		<copy file="${resources.dir}/timesheet-tool.properties" tofile="${testrun-bin.dir}/TimesheetTool.properties" overwrite="true" />
+	</target>
+
+</project>
